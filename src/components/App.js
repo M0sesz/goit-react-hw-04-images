@@ -4,7 +4,7 @@ import ImageGallery from './Gallery/ImageGallery';
 import Button from './Button/Button';
 import Loader from './Loader/Loader';
 import Modal from './Modal/Modal';
-import axios from 'axios';
+import { fetchImages } from './api'; // Імпорт функції з api.js
 
 export const App = () => {
   const [query, setQuery] = useState('');
@@ -14,31 +14,24 @@ export const App = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [totalPages, setTotalPages] = useState(0);
 
-  const fetchImages = () => {
-    const apiKey = '38182366-be3024add4069e03dd1880ded';
-    const apiUrl = `https://pixabay.com/api/?q=${query}&page=${currentPage}&key=${apiKey}&image_type=photo&orientation=horizontal&per_page=12`;
-
-    setIsLoading(true);
-
-    axios
-      .get(apiUrl)
-      .then(response => {
-        const { hits, totalHits } = response.data;
-        setImages(prevImages => [...prevImages, ...hits]);
-        setTotalPages(Math.ceil(totalHits / 12));
-      })
-      .catch(error => console.error(error))
-      .finally(() => {
-        setIsLoading(false);
-      });
-  };
-
   useEffect(() => {
     if (query === '') {
       return;
     }
 
-    fetchImages();
+    setIsLoading(true);
+
+    fetchImages(query, currentPage)
+      .then(data => {
+        setImages(prevImages => [...prevImages, ...data.images]);
+        setTotalPages(data.totalPages);
+      })
+      .catch(error => {
+        console.error(error);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, [query, currentPage]);
 
   const handleSearchSubmit = newQuery => {
@@ -51,9 +44,11 @@ export const App = () => {
   const handleLoadMore = () => {
     setCurrentPage(prevPage => prevPage + 1);
   };
+
   const handleImageClick = imageUrl => {
     setSelectedImage(imageUrl);
   };
+
   const handleCloseModal = () => {
     setSelectedImage(null);
   };
@@ -76,3 +71,5 @@ export const App = () => {
     </div>
   );
 };
+
+export default App;
